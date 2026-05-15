@@ -1,0 +1,44 @@
+/* Shared tokens & fonts for all 3 variants */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Tiro+Devanagari+Sanskrit:ital@0;1&display=swap');
+
+:root {
+  --bg: #0D0C0A;
+  --bg-2: #14120E;
+  --bg-3: #1B1813;
+  --ink: #EDE4D3;
+  --ink-2: #BFB39A;
+  --ink-3: #8A8170;
+  --ink-4: #5A5346;
+  --gold: #C9A862;
+  --gold-2: #E0C589;
+  --brass: #8B6F3F;
+  --brass-deep: #5A4A2E;
+  --line: rgba(201, 168, 98, 0.18);
+  --line-strong: rgba(201, 168, 98, 0.35);
+
+  --serif: 'Cormorant Garamond', 'Times New Roman', serif;
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --dev: 'Tiro Devanagari Sanskrit', 'Noto Serif Devanagari', serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+::selection { background: var(--gold); color: var(--bg); }
+
+/* Subtle paper grain overlay used by some variants */
+.paper-grain::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(rgba(201,168,98,0.02) 1px, transparent 1px),
+    radial-gradient(rgba(201,168,98,0.015) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 2px;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: screen;
+}

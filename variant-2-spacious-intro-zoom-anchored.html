@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ritvik Aggarwal</title>
+<link rel="stylesheet" href="shared.css" />
+<style>
+  body {
+    background: var(--bg);
+    transition: background 1.4s cubic-bezier(.4,.0,.2,1);
+  }
+  body[data-section="hero"]     { background: #0D0C0A; }
+  body[data-section="research"] { background: #0B0C0F; }
+  body[data-section="projects"] { background: #100D08; }
+  body[data-section="startup"] { background: #0F0B12; }
+  body[data-section="writing"]  { background: #0B0E0B; }
+  body[data-section="contact"]  { background: #110C09; }
+  aside { transition: background 1.4s cubic-bezier(.4,.0,.2,1); background: transparent !important; }
+
+
+  /* FULLSCREEN INTRO ZOOM */
+  html { scroll-behavior: smooth; }
+  body.intro-active { overflow-x: hidden; }
+
+  .intro-scroll {
+    height: 360vh;
+    position: relative;
+    z-index: 30;
+    background: transparent;
+    pointer-events: none;
+  }
+
+  .intro-stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    width: 100%;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    text-align: center;
+    background: transparent;
+    isolation: isolate;
+  }
+
+  .intro-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse at 50% 45%, rgba(201,168,98,0.12), transparent 44%),
+      radial-gradient(ellipse at 50% 72%, rgba(139,111,63,0.09), transparent 60%),
+      rgba(13, 12, 10, 0.96);
+    opacity: var(--intro-bg-opacity, 1);
+    transition: opacity 0.08s linear;
+    pointer-events: none;
+  }
+
+  .intro-stage::before {
+    content: '';
+    position: absolute;
+    inset: 34px;
+    z-index: 3;
+    border: 1px solid rgba(201,168,98,0.12);
+    pointer-events: none;
+    opacity: calc(1 - min(var(--intro-progress, 0) * 1.35, 1));
+    transform: scale(calc(1 + var(--intro-progress, 0) * 0.16));
+  }
+
+  .intro-inner {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  .intro-ornament {
+    position: absolute;
+    left: 50%;
+    top: calc(50% - 21vh);
+    transform: translateX(-50%);
+    font-family: var(--dev);
+    color: var(--white);
+    font-size: 15px;
+    letter-spacing: 0.5em;
+    opacity: calc(0.72 * (1 - min(var(--intro-progress, 0) * 2.1, 1)));
+  }
+
+  .intro-name {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(calc(-50% + var(--intro-anchor-correction, 0px)), -50%);
+    font-family: var(--dev), serif;
+    /* Do not zoom with transform: scale(). It can rasterize the glyphs and make
+       them look blurry when enlarged. The JS below changes this font-size
+       directly, so the browser re-renders the Devanagari text as vector glyphs. */
+    font-size: var(--intro-font-size, clamp(88px, 15vw, 220px));
+    font-weight: 400;
+    line-height: 0.86;
+    color: var(--gold);
+    margin: 0;
+    white-space: nowrap;
+    text-shadow: 0 0 48px rgba(201,168,98,0.18);
+    opacity: var(--intro-name-opacity, 1);
+    text-rendering: geometricPrecision;
+    -webkit-font-smoothing: antialiased;
+    font-smooth: always;
+    will-change: font-size, opacity, transform;
+  }
+
+  .intro-name span {
+    display: inline-block;
+  }
+
+  .intro-anchor {
+    position: relative;
+  }
+
+  .intro-english-name {
+    position: absolute;
+    left: 50%;
+    top: calc(50% + 17vh);
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    opacity: calc(0.85 * (1 - min(var(--intro-progress, 0) * 2.4, 1)));
+  }
+
+  .intro-scroll-hint {
+    position: absolute;
+    z-index: 4;
+    left: 50%;
+    bottom: 42px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: var(--ink-4);
+    text-transform: uppercase;
+    opacity: calc(0.88 * (1 - min(var(--intro-progress, 0) * 2.8, 1)));
+  }
+
+  .intro-scroll-hint .line {
+    width: 1px;
+    height: 42px;
+    background: linear-gradient(180deg, var(--gold), transparent);
+    animation: scrollPulse 2.2s ease-in-out infinite;
+  }
+
+  .intro-complete .intro-scroll {
+    pointer-events: none;
+  }
+
+  .page {
+    margin-top: -100vh;
+    opacity: var(--site-opacity, 0);
+    transform: translateY(calc((1 - var(--site-reveal, 0)) * 72px));
+    transition: opacity 0.08s linear, transform 0.08s linear;
+    will-change: opacity, transform;
+  }
+
+  /* Layered granular background */
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 80% 10%, rgba(201,168,98,0.06), transparent 55%),
+      radial-gradient(ellipse at 10% 90%, rgba(139,111,63,0.04), transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+  /* SVG noise grain — fixed, full viewport, above content. Denser & finer. */
+  body::after {
+    content: ''; position: fixed; inset: -50%;
+    pointer-events: none; z-index: 100;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.85 0 0 0 0 0.6 0 0 0 0.7 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 240px 240px;
+    opacity: 0.32;
+    mix-blend-mode: overlay;
+    animation: grainShift 6s steps(8) infinite;
+  }
+  @keyframes grainShift {
+    0%   { transform: translate(0, 0); }
+    20%  { transform: translate(-3%, 2%); }
+    40%  { transform: translate(2%, -4%); }
+    60%  { transform: translate(-2%, 3%); }
+    80%  { transform: translate(3%, -1%); }
+    100% { transform: translate(0, 0); }
+  }
+
+  .page {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    min-height: 100vh;
+    position: relative; z-index: 1;
+  }
+
+  /* LEFT SIDEBAR */
+  aside {
+    position: sticky; top: 0;
+    height: 100vh;
+    padding: 56px 40px;
+    border-right: 1px solid var(--line);
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    background: var(--bg);
+  }
+  .seal-block { display: flex; flex-direction: column; gap: 22px; }
+  .seal {
+    width: 56px; height: 56px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--dev);
+    color: var(--gold);
+    font-size: 28px;
+    position: relative;
+  }
+  .seal::after {
+    content: '';
+    position: absolute; inset: -7px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+  }
+  .id-line { font-family: var(--serif); font-size: 24px; font-weight: 500; line-height: 1.15; }
+  .id-line em { font-style: italic; color: var(--ink-3); font-weight: 400; display: block; font-size: 16px; margin-top: 6px; }
+
+  .vertical-name {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: var(--dev);
+    color: var(--brass);
+    font-size: 22px;
+    letter-spacing: 0.4em;
+    position: absolute;
+    left: 12px; top: 50%; transform: translateY(-50%);
+    opacity: 0.6;
+  }
+
+  aside nav { display: flex; flex-direction: column; gap: 6px; margin-top: 60px; }
+  aside nav a {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 10px 0;
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: center;
+    border-top: 1px solid var(--line);
+    transition: color 0.2s, padding 0.2s;
+  }
+  aside nav a:last-child { border-bottom: 1px solid var(--line); }
+  aside nav a .num { font-family: var(--dev); color: var(--gold); font-size: 13px; }
+  aside nav a .arr { opacity: 0; transition: opacity 0.2s; color: var(--gold); }
+  aside nav a:hover { color: var(--ink); padding-left: 8px; }
+  aside nav a:hover .arr { opacity: 1; }
+
+  .aside-foot { display: flex; flex-direction: column; gap: 18px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--ink-4); text-transform: uppercase; }
+  .aside-foot .live { display: flex; align-items: center; gap: 8px; color: var(--ink-2); }
+  .aside-foot .live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold); animation: pulse 1.6s infinite; }
+  @keyframes pulse { 50% { opacity: 0.4; } }
+  .aside-foot a { color: var(--ink-3); transition: color 0.2s; }
+  .aside-foot a:hover { color: var(--gold); }
+  .aside-foot .socials { display: flex; gap: 16px; }
+
+  /* RIGHT MAIN */
+  main {
+    padding: 0 8% 120px;
+    max-width: 1080px;
+    position: relative;
+  }
+
+  /* HERO — smaller, focused, centered, vertical name */
+  .hero {
+    min-height: 72vh;
+    padding: 60px 0 40px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative;
+    text-align: center;
+  }
+  .hero .ornament {
+    font-family: var(--dev);
+    color: var(--gold);
+    font-size: 15px;
+    letter-spacing: 0.5em;
+    margin-bottom: 36px;
+    opacity: 0.7;
+  }
+  .hero .ornament::before,
+  .hero .ornament::after {
+    content: ''; display: inline-block;
+    width: 40px; height: 1px; background: var(--gold);
+    vertical-align: middle; margin: 0 18px;
+    opacity: 0.6;
+  }
+
+  .vname {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+
+  font-family: var(--dev), serif;
+  font-size: clamp(72px, 12vw, 170px);
+  line-height: 1;
+
+  color: #C9A862;
+  margin: 0;
+
+  position: relative;
+  z-index: 10;
+}
+
+.vname .glyph {
+  display: block;
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+
+
+  .vname .glyph:nth-child(1) { animation-delay: 0.1s; }
+  .vname .glyph:nth-child(2) { animation-delay: 0.28s; }
+  .vname .glyph:nth-child(3) { animation-delay: 0.46s; }
+  .vname .glyph:nth-child(4) { animation-delay: 0.64s; }
+  @keyframes glyphIn { to { opacity: 1; transform: translateY(0); } }
+
+  .hero .english-name {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-top: 38px;
+    padding-top: 20px;
+    position: relative;
+  }
+  .hero .english-name::before {
+    content: ''; position: absolute; top: 0; left: 50%;
+    width: 50px; height: 1px; background: var(--gold);
+    transform: translateX(-50%);
+  }
+
+  .hero .scroll-hint {
+    margin-top: 44px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.35em;
+    color: var(--ink-4); text-transform: uppercase;
+    opacity: 0; animation: fadeIn 1s ease 1.4s forwards;
+  }
+  .hero .scroll-hint .line {
+    width: 1px; height: 40px;
+    background: linear-gradient(180deg, var(--gold), transparent);
+    animation: scrollPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes fadeIn { to { opacity: 1; } }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.4; transform: scaleY(1); transform-origin: top; }
+    50% { opacity: 1; transform: scaleY(1.4); }
+  }
+
+  /* EMBLEM REVEAL SECTION — grand and slow */
+  .emblem-section {
+    padding: 60px 0 140px;
+    position: relative;
+  }
+  .emblem-section .head {
+    text-align: center;
+    margin-bottom: 80px;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .emblem-section .head.revealed { opacity: 1; transform: translateY(0); }
+  .emblem-section .head .deva {
+    font-family: var(--dev); color: var(--gold);
+    font-size: 20px; letter-spacing: 0.4em;
+    margin-bottom: 18px;
+  }
+  .emblem-section .head h3 {
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: clamp(28px, 3vw, 38px);
+    color: var(--ink-2); line-height: 1.3;
+    max-width: 600px; margin: 0 auto;
+  }
+
+  .emblem-list {
+    list-style: none;
+    margin: 0; padding: 0;
+    display: flex; flex-direction: column;
+    gap: 0;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .emblem-row {
+    display: grid;
+    grid-template-columns: 120px 60px 1fr;
+    align-items: baseline;
+    gap: 32px;
+    padding: 56px 0;
+    border-bottom: 1px solid var(--line);
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.9s cubic-bezier(.2,.7,.3,1), transform 0.9s cubic-bezier(.2,.7,.3,1);
+  }
+  .emblem-row:first-child { border-top: 1px solid var(--line); }
+  .emblem-row.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .emblem-row .num {
+    font-family: var(--dev);
+    font-size: clamp(72px, 9vw, 120px);
+    line-height: 1;
+    background: linear-gradient(180deg, var(--gold-2), var(--gold) 50%, var(--brass));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    transition: transform 0.9s cubic-bezier(.2,.7,.3,1) 0.1s;
+    transform: scale(0.85);
+  }
+  .emblem-row.revealed .num { transform: scale(1); }
+  .emblem-row .lead {
+    height: 1px;
+    background: var(--brass-deep);
+    align-self: center;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.7s ease 0.3s;
+  }
+  .emblem-row.revealed .lead { transform: scaleX(1); }
+  .emblem-row .body {
+    display: flex; flex-direction: column; gap: 10px;
+    align-self: center;
+  }
+  .emblem-row .word {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(34px, 4.4vw, 56px);
+    color: var(--ink);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  .emblem-row .meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: var(--ink-4);
+    text-transform: uppercase;
+  }
+
+  /* SECTION */
+  /* 
+  .section { padding: 100px 0; border-top: 1px solid var(--line); }
+  */
+  .section { padding: 80px 0;}
+  .section-marker {
+    display: flex; align-items: baseline; gap: 24px; margin-bottom: 64px;
+  }
+  .section-marker .n { font-family: var(--dev); color: var(--gold); font-size: 24px; min-width: 38px; }
+  .section-marker .t {
+    font-family: var(--serif);
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .section h2 {
+    font-family: var(--serif);
+    font-size: clamp(40px, 5vw, 56px);
+    font-weight: 400;
+    line-height: 1.05;
+    margin-bottom: 60px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .section h2 em { color: var(--gold); }
+
+  /* RESEARCH list */
+  .research-list { display: flex; flex-direction: column; }
+  .research-row {
+    padding: 32px 0;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 120px 1fr 140px;
+    gap: 36px;
+    align-items: start;
+    cursor: pointer;
+    transition: padding 0.25s;
+  }
+  .research-row:last-child { border-bottom: 1px solid var(--line); }
+  .research-row:hover { padding-left: 14px; }
+  .research-row:hover h3 { color: var(--gold); }
+  .research-meta {
+    padding-top: 8px;
+  }
+
+  .research-row .conference {
+    display: inline-block;
+    width: max-content;
+    max-width: 110px;
+
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.25;
+
+    color: #F3E7C8;
+
+    padding: 7px 10px;
+    margin-bottom: 10px;
+
+    border: 1px solid rgba(201, 168, 98, 0.32);
+    border-radius: 18px;
+
+    background: rgba(201, 168, 98, 0.075);
+
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+      0 0 14px rgba(201, 168, 98, 0.05);
+  }
+
+  .research-row .yr { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; color: var(--ink-4); padding-top: 8px; }
+  .research-row h3 {
+    font-family: var(--serif);
+    font-size: 28px;
+    line-height: 1.2;
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: var(--ink);
+    transition: color 0.25s;
+  }
+  .research-row p {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--ink-3);
+    font-size: 16px;
+    line-height: 1.55;
+    max-width: 540px;
+  }
+  .research-row .badge {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--brass);
+    padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
+    justify-self: end;
+    align-self: start; margin-top: 8px;
+  }
+
+  /* PROJECTS */
+  .projects {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+  }
+  .pcard {
+    padding: 32px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    cursor: pointer;
+    transition: transform 0.3s, border-color 0.3s, background 0.3s;
+    display: flex; flex-direction: column;
+    min-height: 240px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pcard:hover { background: var(--bg-2); border-color: var(--line-strong); transform: translateY(-3px); }
+  .pcard::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .pcard:hover::before { opacity: 1; }
+  .pcard .num {
+    font-family: var(--dev); color: var(--gold); font-size: 28px;
+    margin-bottom: 22px;
+  }
+  .pcard h4 {
+    font-family: var(--serif); font-size: 26px; font-weight: 500;
+    color: var(--ink); margin-bottom: 10px;
+  }
+  .pcard h4 em { font-family: var(--dev); font-style: normal; color: var(--gold); font-size: 18px; margin-left: 8px; opacity: 0.7; font-weight: 400; }
+  .pcard p {
+    font-family: var(--serif); font-style: italic;
+    color: var(--ink-3); font-size: 15px; line-height: 1.55;
+    flex: 1;
+  }
+  .pcard .foot {
+    margin-top: 22px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+    color: var(--ink-4); text-transform: uppercase;
+  }
+  .pcard .foot .arr { color: var(--gold); transition: transform 0.3s; }
+  .pcard:hover .foot .arr { transform: translateX(6px); }
+
+  /* STARTUP */
+  .startup-card {
+    padding: 46px;
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(circle at 20% 20%, rgba(201, 168, 98, 0.13), transparent 34%),
+      radial-gradient(circle at 80% 70%, rgba(139, 111, 63, 0.12), transparent 38%),
+      var(--bg);
+    min-height: 300px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .startup-card::before {
+    content: '';
+    position: absolute;
+    inset: 18px;
+    border: 1px solid rgba(201, 168, 98, 0.16);
+    pointer-events: none;
+  }
+
+  .startup-card .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 30px;
+  }
+
+  .startup-card h3 {
+    font-family: var(--serif);
+    font-size: clamp(48px, 7vw, 88px);
+    line-height: 0.95;
+    font-weight: 700;
+    color: var(--ink);
+    max-width: 720px;
+  }
+
+  .startup-card h3 em {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .startup-card p {
+    margin-top: 28px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 20px;
+    line-height: 1.45;
+    color: var(--ink-2);
+    max-width: 620px;
+  }
+
+  .startup-card .soon {
+    margin-top: 34px;
+    display: inline-block;
+    width: fit-content;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #0D0C0A;
+    background: var(--gold);
+    padding: 12px 18px;
+    border-radius: 999px;
+    box-shadow: 0 0 28px rgba(201, 168, 98, 0.22);
+  }
+
+
+  /* WRITING */
+  .writing { display: flex; flex-direction: column; }
+  .write-row {
+    display: grid; grid-template-columns: 100px 1fr 80px;
+    gap: 36px; align-items: baseline;
+    padding: 26px 0;
+    border-top: 1px solid var(--line);
+    cursor: pointer; transition: padding 0.2s;
+  }
+  .write-row:last-child { border-bottom: 1px solid var(--line); }
+  .write-row:hover { padding-left: 14px; }
+  .write-row:hover .title { color: var(--gold); }
+  .write-row .date { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--ink-4); }
+  .write-row .title { font-family: var(--serif); font-size: 22px; color: var(--ink); transition: color 0.2s; line-height: 1.3; }
+  .write-row .title em { font-style: italic; color: var(--ink-3); display: block; font-size: 14px; margin-top: 4px; }
+  .write-row .min { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--ink-4); text-align: right; }
+
+  /* GITHUB strip */
+  .github-strip {
+    margin-top: 60px;
+    padding: 36px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: 280px 1fr; gap: 60px; align-items: center;
+  }
+  .github-strip .head { font-family: var(--mono); font-size: 11px; letter-spacing: 0.22em; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; }
+  .github-strip h5 { font-family: var(--serif); font-size: 22px; font-weight: 500; color: var(--ink); margin-bottom: 4px; }
+  .github-strip p { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .gh-grid {
+    display: grid; grid-template-columns: repeat(26, 1fr); gap: 4px;
+  }
+  .gh-cell { aspect-ratio: 1; background: var(--bg-3); border-radius: 2px; }
+  .gh-cell.l1 { background: rgba(201,168,98,0.2); }
+  .gh-cell.l2 { background: rgba(201,168,98,0.45); }
+  .gh-cell.l3 { background: rgba(201,168,98,0.7); }
+  .gh-cell.l4 { background: var(--gold); }
+
+  /* CONTACT */
+  .end-block { padding: 120px 0 60px; }
+  .end-block .big {
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: clamp(48px, 7vw, 84px); line-height: 1.05;
+    margin-bottom: 60px; max-width: 800px;
+  }
+  .end-block .big em { color: var(--gold); }
+  .end-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 60px;
+    padding-top: 40px; border-top: 1px solid var(--line);
+  }
+  .end-grid h6 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em; color: var(--ink-4); text-transform: uppercase; margin-bottom: 18px; }
+  .end-grid a { display: block; font-family: var(--serif); font-size: 22px; color: var(--ink); padding: 8px 0; transition: color 0.2s, padding 0.2s; }
+  .end-grid a:hover { color: var(--gold); padding-left: 8px; }
+  .end-grid a em { color: var(--ink-4); font-style: normal; font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; margin-left: 12px; }
+
+  footer {
+    padding-top: 50px;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+    color: var(--ink-4); text-transform: uppercase;
+  }
+  footer .dev { font-family: var(--dev); font-size: 16px; color: var(--brass); letter-spacing: 0.3em; text-transform: none; }
+
+  @media (max-width: 900px) {
+    .page { grid-template-columns: 1fr; }
+    aside { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+    aside nav { display: none; }
+    .research-row { grid-template-columns: 1fr; gap: 8px; }
+    .research-row .badge { justify-self: start; }
+    .projects { grid-template-columns: 1fr; }
+    .write-row { grid-template-columns: 90px 1fr; }
+    .write-row .min { display: none; }
+    .github-strip { grid-template-columns: 1fr; }
+    .end-grid { grid-template-columns: 1fr; }
+    main { padding: 60px 32px; }
+  }
+</style>
+</head>
+<body data-screen-label="Spacious Minimal" data-section="hero">
+
+  <!-- FULLSCREEN INTRO -->
+  <section class="intro-scroll" aria-label="Intro">
+    <div class="intro-stage">
+      <div class="intro-inner">
+        <div class="intro-ornament">॥ Ritvik Aggarwal ॥</div>
+        <h1 class="intro-name" aria-label="Ritvik">
+          <span aria-hidden="true">ऋ</span><span class="intro-anchor" aria-hidden="true" data-anchor-x="0.52">त्वि</span><span aria-hidden="true">क</span>
+        </h1>
+        <!-- <div class="intro-english-name">Ritvik &nbsp;·&nbsp; Aggarwal</div> -->
+      </div>
+      <div class="intro-scroll-hint">
+        <span>scroll</span>
+        <span class="line"></span>
+      </div>
+    </div>
+  </section>
+
+
+  <div class="page">
+
+    <aside>
+      <div class="seal-block">
+        <!-- 
+        <div class="seal">ऋ</div>
+        --> 
+        <div class="id-line">Ritvik Aggarwal<em>Toronto, Canada</em></div>
+      </div>
+
+      <nav>
+        <a href="#research"><span class="num">०१</span><span>Research</span><span class="arr">→</span></a>
+        <a href="#projects"><span class="num">०२</span><span>Projects</span><span class="arr">→</span></a>
+        <a href="#startup"><span class="num">०३</span><span>Startup</span><span class="arr">→</span></a>
+        <a href="#writing"><span class="num">०४</span><span>Writing</span><span class="arr">→</span></a>
+        <a href="#contact"><span class="num">०५</span><span>Contact</span><span class="arr">→</span></a>
+      </nav>
+
+      <div class="aside-foot">
+        <div class="live"><span class="dot"></span>Open to research collabs</div>
+        <div class="socials">
+          <a href="mailto:contact@ritvikaggarwal.com">Email</a>
+          <a href="https://www.linkedin.com/in/aggarwal-ritvik/" target="_blank">IN</a>
+          <a href="https://github.com/ritvikagg" target="_blank">GH</a>
+          <a href="https://scholar.google.ca/citations?user=z29qlfAAAAAJ&hl=en&authuser=2" target="_blank">Gs</a>
+        </div>
+        <!--
+        <div>MMXXVI · v3.1</div>
+      -->
+      </div>
+    </aside>
+
+    <main>
+
+      <!-- INTRO handled above page layout -->
+
+      <!-- EMBLEM REVEAL -->
+      <section class="emblem-section" data-bg="hero">
+        <!--
+        <div class="head" data-reveal>
+          <div class="deva">॥ पञ्चचिह्न ॥</div>
+          <h3>An author, in five emblems —<br/><em>each scrolled into being</em>.</h3>
+        </div>
+        -->
+
+        <ol class="emblem-list">
+          <li class="emblem-row" data-reveal>
+            <span class="num">१</span>
+            <span class="lead"></span>
+            <span class="body">
+              <span class="word">entrepreneur</span>
+              <span class="meta">Startup Coming soon, not AI ;)</span>
+            </span>
+          </li>
+          <li class="emblem-row" data-reveal>
+            <span class="num">२</span>
+            <span class="lead"></span>
+            <span class="body">
+              <span class="word">student</span>
+              <span class="meta">CS & Maths · University of Toronto · Class of '29</span>
+            </span>
+          </li>
+          <li class="emblem-row" data-reveal>
+            <span class="num">३</span>
+            <span class="lead"></span>
+            <span class="body">
+              <span class="word">researcher</span>
+              <span class="meta">AI/ML · LLMs · NLP</span>
+            </span>
+          </li>
+          <li class="emblem-row" data-reveal>
+            <span class="num">४</span>
+            <span class="lead"></span>
+            <span class="body">
+              <span class="word">writer</span>
+              <span class="meta">Blogs focused on cutting-edge AI research</span>
+            </span>
+          </li>
+        </ol>
+      </section>
+
+      <!-- RESEARCH -->
+      <section class="section" id="research" data-bg="research">
+        <div class="section-marker"><span class="n">०१</span><span class="t">Selected Research</span></div>
+        <h2>Three lines of inquiry into <em>more reliable</em> AI systems.</h2>
+
+        <div class="research-list">
+          <a class="research-row">
+            <div class="yr">2026 / 05</div>
+            <div>
+              <h3>Coming Soon...</h3>
+              <p></p>
+            </div>
+            <div class="badge">Ongoing</div>
+          </a>
+
+          <a class="research-row">
+            <div class="research-meta">
+              <div class="conference">NAACL SRW 2025</div>
+              <div class="yr">2025 / 04</div>
+            </div>
+            <div>
+              <h3>ChunkRAG: Novel LLM-Chunk Filtering Method for RAG Systems</h3>
+              <p>Co-lead author for research focused on Natural Language Processing and Information Retrieval, proposing a novel LLM-driven chunk filtering framework (ChunkRAG) to enhance retrieval quality and improve factual consistency in RAG systems.</p>
+            </div>
+            <div class="badge">Published</div>
+          </a>
+      </section>
+
+      <!-- PROJECTS -->
+      <section class="section" id="projects" data-bg="projects">
+        <div class="section-marker"><span class="n">०२</span><span class="t">Personal Projects</span></div>
+        <h2>Things I've <em>built</em> when I should have been sleeping.</h2>
+
+        <div class="projects">
+          <a class="pcard" href="https://github.com/ritvikagg/hackthefuturefinalonefs" target="_blank" rel="noopener noreferrer">
+            <div class="num">०१</div>
+            <p style="color: #bfae7a; font-weight: bold;"><em>अक्षय</em></p>
+            <h4>Autonomous Supply Chain Resilience Agent</h4>
+            <p>AI co-pilot for mid-market manufacturing: monitors disruptions, assesses risk, and recommends mitigations using Google ADK and Gemini.</p>
+            <div class="foot"><span>Python · Astro · TypeScript</span><span class="arr">→</span></div>
+          </a>
+        </div>
+
+        <div class="github-strip">
+          <div>
+            <div class="head">Activity</div>
+            <h5>365 days of sweat & tears</h5>
+            <!-- <p>last 52 weeks · pushed to <span style="color:var(--gold)">smriti</span> 2h ago</p> -->
+             <br/>
+             <p>* Only for illustrative purposes</p>
+          </div>
+          <div class="gh-grid" id="ghGrid"></div>
+        </div>
+      </section>
+
+      <!-- STARTUP -->
+      <section class="section" id="startup" data-bg="startup">
+        <div class="section-marker"><span class="n">०३</span><span class="t">Startup</span></div>
+        <h2>Building something<em>...</em></h2>
+
+        <div class="startup-card">
+          <div>
+            <div class="label">September 2026</div>
+            <h3>Bold, strange, and hopefully <em>useful</em>.</h3>
+            <p>
+              A consumer startup currently under construction — not another AI wrapper ;) — designed around incentives,
+              behavior, and the small psychological tricks that make people actually follow through.
+            </p>
+          </div>
+
+          <span class="soon">Coming Soon</span>
+        </div>
+      </section>
+
+      <!-- WRITING -->
+      <section class="section" id="writing" data-bg="writing">
+        <div class="section-marker"><span class="n">०४</span><span class="t">Writing</span></div>
+        <h2>Notes from a slow <em>reader</em>.</h2>
+
+        <div class="writing">
+          <a class="write-row">
+            <span class="date">.. MAY '26</span>
+            <span class="title">Coming Soon...<em>Research Paper</em></span>
+            <span class="min">... min</span>
+          </a>
+          <!--
+          <a class="write-row">
+            <span class="date">२२ · MAR '26</span>
+            <span class="title">Why I left my first startup, in three drafts<em>memoir</em></span>
+            <span class="min">18 min</span>
+          </a>
+        -->
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section class="end-block" id="contact" data-bg="contact">
+        <div class="section-marker"><span class="n">०५</span><span class="t">Get in touch</span></div>
+        <div class="big">If any of this resonates — <em>write to me</em>.<br/>I read everything; reply to most.</div>
+
+        <div class="end-grid">
+          <div>
+            <h6>Direct</h6>
+            <a href="mailto:contact@ritvikaggarwal.com">
+              Email<em>fastest</em>
+            </a>
+            <!--
+            <a href="#">Schedule a call<em>cal.com/ritvik</em></a>
+            <a href="#">PGP public key<em>0xF3A2…</em></a>
+            -->
+          </div>
+          <div>
+            <h6>Elsewhere</h6>
+            <a href="https://www.linkedin.com/in/aggarwal-ritvik/" target="_blank">Linkedin<em>Ritvik Aggarwal</em></a>
+            <a href="https://github.com/ritvikagg" target="_blank">GitHub<em>@ritvikagg</em></a>
+            <a href="https://scholar.google.ca/citations?user=z29qlfAAAAAJ&hl=en&authuser=2" target="_blank">Google Scholar<em>Ritvik Aggarwal</em></a>
+            <a href="Ritvik_Aggarwal_Resume-1-2-1.pdf" target="_blank" rel="noopener noreferrer">
+              Resume ↓<em>PDF · 2 pages</em>
+            </a>
+          </div>
+        </div>
+
+        <footer>
+          <div>© 2026 Ritvik Aggarwal</div>
+          <div class="dev">॥ इति समाप्तम् ॥</div>
+        </footer>
+      </section>
+
+    </main>
+
+  </div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+
+  // Fullscreen Sanskrit intro zoom reveal
+  (function(){
+    const intro = document.querySelector('.intro-scroll');
+    if (!intro) return;
+
+    function clamp(v, min, max) {
+      return Math.min(Math.max(v, min), max);
+    }
+
+    function smoothstep(v) {
+      v = clamp(v, 0, 1);
+      return v * v * (3 - 2 * v);
+    }
+
+    function updateIntro() {
+      const maxScroll = Math.max(1, intro.offsetHeight - window.innerHeight);
+      const raw = window.scrollY / maxScroll;
+      const p = clamp(raw, 0, 1);
+
+      // Slower early movement, then a massive final zoom so the word exceeds the viewport.
+      // Use actual font-size instead of transform scaling to keep the Sanskrit glyphs crisp.
+      const zoom = Math.pow(p, 2.25);
+      const scale = 1 + zoom * 30;
+      const baseFontSize = clamp(window.innerWidth * 0.15, 88, 220);
+      const fontSize = baseFontSize * scale;
+
+      // The page starts blending in while the name is already oversized.
+      const siteReveal = smoothstep((p - 0.56) / 0.44);
+      const bgFade = 1 - smoothstep((p - 0.42) / 0.58);
+      const nameOpacity = p < 0.90 ? 1 : clamp(1 - ((p - 0.90) / 0.10), 0, 1);
+
+      document.documentElement.style.setProperty('--intro-progress', p.toFixed(4));
+      document.documentElement.style.setProperty('--intro-font-size', `${fontSize.toFixed(2)}px`);
+      document.documentElement.style.setProperty('--intro-anchor-correction', '0px');
+
+      // Keep the centre of the viewport locked to the middle of “त्वि”, not to
+      // the beginning of the word. This makes the site reveal through that open
+      // middle area as the letters grow past the screen.
+      const anchor = document.querySelector('.intro-anchor');
+      if (anchor) {
+        const rect = anchor.getBoundingClientRect();
+        const anchorPoint = Number(anchor.dataset.anchorX || 0.52);
+        const targetX = rect.left + rect.width * anchorPoint;
+        const correction = (window.innerWidth / 2) - targetX;
+        document.documentElement.style.setProperty('--intro-anchor-correction', `${correction.toFixed(2)}px`);
+      }
+
+      document.documentElement.style.setProperty('--intro-name-opacity', nameOpacity.toFixed(4));
+      document.documentElement.style.setProperty('--intro-bg-opacity', bgFade.toFixed(4));
+      document.documentElement.style.setProperty('--site-reveal', siteReveal.toFixed(4));
+      document.documentElement.style.setProperty('--site-opacity', siteReveal.toFixed(4));
+      document.body.classList.toggle('intro-complete', p >= 0.995);
+      document.body.classList.toggle('intro-active', p < 0.995);
+    }
+
+    let raf = null;
+    function requestUpdate() {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        updateIntro();
+      });
+    }
+
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate);
+    updateIntro();
+  })();
+
+  // Section-aware background color shift
+  (function(){
+    const sections = Array.from(document.querySelectorAll('[data-bg]'));
+    if (!sections.length) return;
+    function update() {
+      const probe = window.innerHeight * 0.35; // 35% from top
+      let current = sections[0];
+      for (const s of sections) {
+        const r = s.getBoundingClientRect();
+        if (r.top <= probe) current = s;
+      }
+      const v = current.dataset.bg;
+      if (document.body.dataset.section !== v) document.body.dataset.section = v;
+    }
+    let raf = null;
+    window.addEventListener('scroll', () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = null; update(); });
+    }, { passive: true });
+    update();
+  })();
+
+  // Scroll reveal for emblems
+  (function(){
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('[data-reveal]').forEach(el => el.classList.add('revealed'));
+      return;
+    }
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('revealed');
+        }
+      });
+    }, { threshold: 0.35, rootMargin: '0px 0px -10% 0px' });
+    document.querySelectorAll('[data-reveal]').forEach(el => obs.observe(el));
+  })();
+
+  // Contribution grid
+  (function(){
+    const grid = document.getElementById('ghGrid');
+    if (!grid) return;
+    let s = 271828;
+    function r() { s = (s * 9301 + 49297) % 233280; return s / 233280; }
+    for (let i = 0; i < 26 * 7; i++) {
+      const v = r();
+      let cls = '';
+      if (v > 0.88) cls = 'l4';
+      else if (v > 0.68) cls = 'l3';
+      else if (v > 0.42) cls = 'l2';
+      else if (v > 0.18) cls = 'l1';
+      const d = document.createElement('div');
+      d.className = 'gh-cell ' + cls;
+      grid.appendChild(d);
+    }
+  })();
+</script>
+
+</body>
+</html>
